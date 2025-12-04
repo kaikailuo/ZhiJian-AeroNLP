@@ -1,0 +1,7 @@
+openai==1.93.0
+pandas==2.3.0
+python-dotenv==1.1.1
+PyYAML==6.0.2
+Requests==2.32.4
+poml==0.0.8
+streamlit==1.38.0

@@ -1,0 +1,132 @@
+# NOTAM项目主配置文件
+
+# API配置
+api:
+  default_provider: "deepseek"
+  
+  providers:
+    deepseek:
+      api_key: "${DEEPSEEK_API_KEY}"
+      base_url: "https://api.deepseek.com/v1"
+      model: "deepseek-chat"
+      max_tokens: 8192
+      temperature: 0.1
+
+# 路径配置
+paths:
+  base_dir: "."
+  data_dir: "./data"
+  input_dir: "./data/input"
+  output_dir: "./data/output"
+  field_templates_dir: "./data/field_templates"
+  logs_dir: "./logs"
+
+# 处理配置
+processing:
+  default_sample_size: 100
+  max_workers: 4
+  default_output_format: "json"
+  
+  # 批量处理配置
+  batch_config:
+    light:
+      input: "灯.xls"
+      output: "light_processed.json"
+      sample_size: 100
+      telex_column: "原文"
+      output_format: "json"
+    
+    # runway:
+    #   input: "runway_0.xlsx"
+    #   output: "runway_processed.json"
+    #   sample_size: 100
+    #   output_format: "json"
+    
+    # airport:
+    #   input: "airport_0.xlsx"
+    #   output: "airport_processed.json"
+    #   sample_size: 100
+    #   output_format: "json"
+
+# 比较配置 - 按数据类型定义字段映射
+comparison:
+  # 全局排除字段（所有类型都排除）
+  global_exclude_fields: ["telex", "category"]
+  
+  # 每种数据类型的字段配置
+  field_mappings:
+    light:
+      # 核心字段（必须匹配）
+      core_fields: ["airport", "runway", "lightcate", "state"]
+      # 可选字段（比较但不影响整体匹配判断）
+      optional_fields: ["discate", "downgrade", "backup_lighting"]
+      # 排除字段（此类型特有的排除字段）
+      exclude_fields: []
+    
+    runway:
+      core_fields: ["airport", "runway", "type"]
+      optional_fields: ["remark", "aircraft_type", "asda", "lda", "toda", "tora", "pcn_info"]
+      exclude_fields: []
+    
+    airport:
+      core_fields: ["airport", "rest_type"]
+      optional_fields: ["remark", "affect_actype", "affect_region", "affect_alt", "flight_type"]
+      exclude_fields: []
+    
+    area:
+      core_fields: ["area_name", "coordinates"]
+      optional_fields: ["altitude_range", "time_restriction", "purpose"]
+      exclude_fields: []
+    
+    airway:
+      core_fields: ["airway_id", "direction"]
+      optional_fields: ["altitude_restriction", "navigation_aid"]
+      exclude_fields: []
+
+  # 批量比较配置
+  batch_compare:
+    - data_type: "light"
+      excel_file: "light_0.xlsx"
+      json_file: "light_processed.json"
+      output_file: "light_comparison.xlsx"
+    
+    - data_type: "runway"
+      excel_file: "runway_0.xlsx"
+      json_file: "runway_processed.json"
+      output_file: "runway_comparison.xlsx"
+    
+    - data_type: "airport"
+      excel_file: "airport_0.xlsx"
+      json_file: "airport_processed.json"
+      output_file: "airport_comparison.xlsx"
+
+processing:
+  batch_config:
+    light:
+      input: "灯.xls"
+      output: "light_processed.json"
+      sample_size: 100
+      output_format: "json"
+      # 完整的列名映射配置
+      column_mapping:
+        telex: "原文"          # NOTAM文本列
+
+        change_info: "变更信息" # 变更信息列
+        exclude_info: "排除信息" # 排除信息列
+        # 灯光特有字段
+        airport: "机场"
+        runway: "跑道"
+        lightcate: "灯光类型"
+        state: "不可用等级"
+        discate: "降级/不可用"
+        downgrade: "降级等级"
+        distance: "可用距离"
+        percentage: "百分比"
+
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_logging: true
+  console_logging: true

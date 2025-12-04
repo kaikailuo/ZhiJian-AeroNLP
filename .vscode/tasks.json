@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "uv: sync dependencies",
+            "type": "shell",
+            "command": "uv sync",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "uv: install streamlit",
+            "type": "shell",
+            "command": "uv pip install streamlit",
+            "group": "build"
+        }
+    ]
+}
