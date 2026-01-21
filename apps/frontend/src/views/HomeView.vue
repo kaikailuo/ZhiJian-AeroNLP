@@ -14,6 +14,9 @@
       <div class="side-footer">
         <n-button tertiary block @click="handleLogout">退出登录</n-button>
       </div>
+      <div class="brand">
+        <img class="brand-logo" :src="logoUrl" alt="ZhiJian-AeroNLP logo" />
+      </div>
     </aside>
     <main class="main-panel fade-in">
       <header class="page-header">
@@ -107,6 +110,7 @@ import { NButton } from "naive-ui";
 import * as echarts from "echarts";
 import { dashboardAPI } from "@/services/dashboard";
 import { useAuthStore } from "@/stores/auth";
+import logoUrl from "@/assets/logo.png";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -132,7 +136,13 @@ const handleLogout = async () => {
 };
 
 onMounted(async () => {
-  await fetchSummary();
+  try {
+    await fetchSummary();
+  } catch (err) {
+    router.push("/login");
+    return;
+  }
+
   if (chartRef.value) {
     const chart = echarts.init(chartRef.value);
     chart.setOption({
@@ -159,9 +169,25 @@ onMounted(async () => {
     });
   }
 });
+
 </script>
 
 <style scoped>
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 水平居中 */
+  gap: var(--brand-gap, 12px);
+}
+
+.brand-logo {
+  width: var(--brand-logo-size, 330px);
+  height: var(--brand-logo-size, 330px);
+  object-fit: contain;
+  border-radius: var(--brand-logo-radius, 20px);
+  margin-left: var(--brand-logo-offset, -20px); /* 可配置左移 */
+}
+
 .nav-list {
   display: grid;
   gap: 10px;
@@ -264,7 +290,9 @@ onMounted(async () => {
 }
 
 .side-footer {
+  background-color:rgb(188, 194, 216);
   margin-top: 32px;
+  border-radius: 5px;
 }
 
 @media (max-width: 960px) {
