@@ -62,6 +62,14 @@
     },
 
     {
+      "label": "deps:all",
+      "dependsOn": [
+        "backend:deps (uv sync)",
+        "frontend:deps (npm install)"
+      ],
+      "dependsOrder": "sequence"
+    },
+    {
       "label": "dev:all",
       "dependsOn": [
         "backend:dev",
@@ -73,10 +81,8 @@
     {
       "label": "dev:all:with-deps",
       "dependsOn": [
-        "backend:deps (uv sync)",
-        "frontend:deps (npm install)",
-        "backend:dev",
-        "frontend:dev"
+        "deps:all",
+        "dev:all"
       ],
       "dependsOrder": "sequence"
     }
