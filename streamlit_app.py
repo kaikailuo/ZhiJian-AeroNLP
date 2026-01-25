@@ -61,7 +61,7 @@ PROMPT_EXAMPLES = {
 def get_prompt_by_key(key: str) -> str:
     return PROMPT_NAME_MAP.get(key, '')
 
-"""Highlight utilities with dynamic field awareness per prompt type and pastel colors."""
+# Highlight utilities with dynamic field awareness per prompt type and pastel colors.
 
 # 定义每类 Prompt 常见字段（尽量覆盖 prompts.py 中的类型）
 PROMPT_CATEGORY_FIELDS = {
@@ -213,15 +213,52 @@ with st.sidebar:
 
     st.markdown('---')
     st.subheader('API 设置')
-    # 固定使用 dmxapi，界面显示为 deepseek-r1-qwen2.5-7b
-    st.info('🔧 使用 DMX API 调用 gpt-4.1-nano，界面显示为 deepseek-r1-qwen2.5-7b')
     
-    default_base_url = st.text_input('Base URL', value='https://www.dmxapi.com/v1')
-    default_api_key = st.text_input('API Key', value='sk-fC3kByDAMkAIcnEDmYvYzzComNjZ4PsJmPZMK2vKIxz6Q2QE', type='password', help='DMX 平台 API Key')
-    model_name = st.text_input('模型名称', value='deepseek-r1-qwen2.5-7b', disabled=True, help='界面显示名称，实际调用 gpt-4.1-nano')
-    temperature = st.slider('Temperature', 0.0, 1.2, 0.0, 0.1)
-    st.caption('实际调用模型: gpt-4.1-nano')
+    # 预设配置
+    PROVIDER_PRESETS = {
+        'DMX API': {
+            'url': 'https://www.dmxapi.com/v1',
+            'model': 'gpt-4.1-nano',
+            'key': 'sk-fC3kByDAMkAIcnEDmYvYzzComNjZ4PsJmPZMK2vKIxz6Q2QE' # 仅为示例
+        },
+        'Alibaba DashScope (Qwen)': {
+            'url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            'model': 'qwen-plus',
+            'key': ''
+        },
+        'DeepSeek Official': {
+            'url': 'https://api.deepseek.com',
+            'model': 'deepseek-chat',
+            'key': ''
+        },
+        'Custom': {
+            'url': '',
+            'model': '',
+            'key': ''
+        }
+    }
 
+    def on_provider_change():
+        p = st.session_state.selected_provider
+        if p in PROVIDER_PRESETS and p != 'Custom':
+            st.session_state.base_url_input = PROVIDER_PRESETS[p]['url']
+            st.session_state.model_name_input = PROVIDER_PRESETS[p]['model']
+            # 如果预设中有key（例如demo key），也可以填入，但通常建议用户自己填
+            if PROVIDER_PRESETS[p]['key']:
+                 st.session_state.api_key_input = PROVIDER_PRESETS[p]['key']
+
+    st.selectbox('快速预设 (Provider)', list(PROVIDER_PRESETS.keys()), index=0, key='selected_provider', on_change=on_provider_change)
+    
+    # 给输入框添加 key 以便通过 callback 更新
+    if 'base_url_input' not in st.session_state: st.session_state.base_url_input = PROVIDER_PRESETS['DMX API']['url']
+    if 'model_name_input' not in st.session_state: st.session_state.model_name_input = PROVIDER_PRESETS['DMX API']['model']
+    if 'api_key_input' not in st.session_state: st.session_state.api_key_input = PROVIDER_PRESETS['DMX API']['key']
+
+    default_base_url = st.text_input('Base URL', key='base_url_input')
+    default_api_key = st.text_input('API Key', type='password', help='API Key', key='api_key_input')
+    model_name = st.text_input('模型名称', disabled=False, help='请输入实际调用的模型名称', key='model_name_input')
+    
+    temperature = st.slider('Temperature', 0.0, 1.2, 0.0, 0.1)
     clear_chat = st.button('🗑 清除历史对话')
 
 # Session state for history
@@ -252,8 +289,8 @@ if user_input:
         status_placeholder = st.empty()
         start_time = time.time()
         try:
-            # 固定使用 gpt-4.1-nano
-            actual_model = 'gpt-4.1-nano'
+            # 使用用户输入的模型名称
+            actual_model = model_name
             api_manager = init_api_manager(default_api_key, default_base_url, actual_model, temperature)
             prompt_text = st.session_state.get('prompt_text', get_prompt_by_key(prompt_key))
 
