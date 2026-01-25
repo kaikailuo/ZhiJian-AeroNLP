@@ -3,6 +3,7 @@ import { useAuthStore } from "@/stores/auth";
 import LoginView from "@/views/LoginView.vue";
 import HomeView from "@/views/HomeView.vue";
 import PlaceholderView from "@/views/PlaceholderView.vue";
+import TrainingLab from "@/views/TrainingLab.vue";
 
 const routes = [
   { path: "/login", name: "login", component: LoginView },
@@ -22,7 +23,7 @@ const routes = [
   {
     path: "/training",
     name: "training",
-    component: PlaceholderView,
+    component: TrainingLab,
     meta: { requiresAuth: true, title: "训练实验室" },
   },
   {

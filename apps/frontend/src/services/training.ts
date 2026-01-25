@@ -1,7 +1,18 @@
 import api from "@/services/api";
 
+export interface TrainingSubmission {
+  exercise_id: string;
+  user_answer: any;
+}
+
+export interface TrainingResponse {
+  status: string;
+  message: string;
+  data: any;
+}
+
 export const trainingAPI = {
-  list() {
-    return api.get("/training");
+  submit(payload: TrainingSubmission) {
+    return api.post<TrainingResponse>("/training/submit", payload);
   },
 };
