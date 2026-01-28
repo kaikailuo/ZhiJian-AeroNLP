@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "panda:css": "panda cssgen -o src/styled-system/styles.css --watch",
+    "panda:ui": "panda codegen --watch"
   },
   "dependencies": {
     "axios": "^1.7.7",
@@ -17,8 +19,10 @@
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
+    "@pandacss/dev": "^1.8.1",
     "@vitejs/plugin-vue": "^5.1.4",
     "typescript": "^5.6.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "@types/bun": "latest"
   }
 }

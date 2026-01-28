@@ -3,14 +3,18 @@
 :root {
   font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
   color-scheme: light;
-  --color-ink: #0a1220;
-  --color-slate: #233047;
-  --color-ice: #f5f7fb;
-  --color-blue: #1a74ff;
+  --color-ink: var(--colors-surface-text);
+  --color-slate: var(--colors-surface-text-dim);
+  --color-ice: var(--colors-surface-canvas);
+  --color-blue: var(--colors-brand-primary);
   --color-cyan: #1fe1ff;
-  --color-navy: #0b1020;
-  --color-card: #ffffff;
-  --color-border: rgba(11, 16, 32, 0.12);
+  --color-navy: var(--colors-brand-bg);
+  --color-card: var(--colors-surface-base);
+  --color-card-alt: var(--colors-surface-elevated);
+  --color-panel: var(--colors-surface-sunken);
+  --color-border: var(--colors-surface-outline);
+  --color-border-strong: var(--colors-surface-outline-strong);
+  --color-pill: var(--colors-brand-surface);
 }
 
 * {
@@ -117,10 +121,14 @@ a {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(26, 116, 255, 0.12);
-  color: #0b5edb;
+  background: var(--color-pill);
+  color: var(--color-blue);
   font-size: 12px;
   font-weight: 600;
+}
+
+.theme-dark {
+  color-scheme: dark;
 }
 
 .fade-in {

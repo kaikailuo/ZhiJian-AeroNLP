@@ -1,0 +1,9 @@
+// .vscode/settings.json
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "*.config.ts, *.config.js, tsconfig.json, .env*, .gitignore",
+    "package-lock.json": "package-lock.json, bun.lock",
+  }
+}
