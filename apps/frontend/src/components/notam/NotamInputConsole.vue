@@ -6,9 +6,9 @@
       <NotamEditor
         v-model="rawText"
         :engine-ready="engineReady"
-        @execute="emitExecute"
+        @execute="handleExecute"
         @clear="handleClear"
-        @load-example="emitLoadExample"
+        @load-example="handleLoadExample"
         @batch-upload="handleBatchUpload"
       />
     </div>
@@ -27,40 +27,47 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref, onUnmounted } from "vue";
+import { watch, ref, onUnmounted } from "vue";
 import { css } from "@/styled-system/css";
 import { useNotamRunStore } from "@/stores/notamRunStore";
 import NotamEditor from "@/components/notam/NotamEditor.vue";
 import NotamRadar from "@/components/notam/NotamRadar.vue";
-import { NotamEvents } from "@/constants/events";
 import { usePreferenceStore } from "@/stores/preferenceStore";
-const pref = usePreferenceStore();
 
+const pref = usePreferenceStore();
+const notamRunStore = useNotamRunStore();
 const props = defineProps<{
-  modelValue: string;
   engineReady: boolean;
 }>();
 
-const emit = defineEmits<{
-  (e: typeof NotamEvents.UPDATE_MODEL, value: string): void;
-  (e: typeof NotamEvents.EXECUTE): void;
-  (e: typeof NotamEvents.LOAD_EXAMPLE): void;
-}>();
-
-const notamRunStore = useNotamRunStore();
-
-const rawText = computed({
-  get: () => props.modelValue,
-  set: (value: string) => emit(NotamEvents.UPDATE_MODEL, value),
-});
+const rawText = ref("");
 
 const handleClear = () => {
-  emit(NotamEvents.UPDATE_MODEL, "");
   notamRunStore.updateGrounding("");
 };
 
-const emitExecute = () => emit(NotamEvents.EXECUTE);
-const emitLoadExample = () => emit(NotamEvents.LOAD_EXAMPLE);
+const handleExecute = () => {
+  if (!rawText.value.trim()) return;
+  
+  // 直接调用 Store 创建任务
+  notamRunStore.createRun(rawText.value);
+  
+  // 可选：清空输入框，或保留方便修改
+  // rawText.value = ""; 
+};
+
+const handleLoadExample = () => {
+  rawText.value = `A0123/24 NOTAMN
+Q) ZBPE/QRTCA/IV/BO/W/000/197/3956N11623E025
+A) ZBPE B) 2402010000 C) 2402152359
+D) DAILY 0000-0400 0800-1200
+E) TEMPORARY RESTRICTED AREA ESTABLISHED BOUNDED BY:
+395624N1162312E-395812N1162530E-400122N1162215E-
+395910N1161845E-395624N1162312E.
+VERTICAL LIMITS: GND UP TO FL197.
+TYPE OF RESTRICTION: MILITARY EXERCISE.
+F) GND G) FL197`;
+};
 
 watch(
   () => rawText.value,
@@ -72,16 +79,7 @@ watch(
 );
 
 const handleBatchUpload = (file: File) => {
-  // 模拟读取文件：在实际应用中这里应该用 FileReader 读取内容
-  // 这里我们直接启动一个模拟的 Batch Run
-  const runId = notamRunStore.startRun(
-    `[BATCH IMPORT] ${file.name}`, 
-    props.engineReady ? "default" : undefined, 
-    "batch", 
-    { filename: file.name, total: 42 } // 模拟 42 个文件
-  );
-  
-  notamRunStore.simulateBatchRun(runId);
+  notamRunStore.simulateBatch();
 };
 
 // --- Resizer Logic ---

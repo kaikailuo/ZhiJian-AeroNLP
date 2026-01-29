@@ -78,10 +78,7 @@
       <NotamWorkbench>
         <template #left>
           <NotamInputConsole
-            v-model="rawInput"
             :engine-ready="Boolean(selectedKeyId)"
-            @execute="handleExecute"
-            @load-example="loadExample"
           />
         </template>
         <template #right>
@@ -95,7 +92,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useKeyStore } from "@/stores/keyStore";
-import { useNotamRunStore } from "@/stores/notamRunStore";
 import { usePreferenceStore } from "@/stores/preferenceStore";
 import { css } from "@/styled-system/css";
 import SideNav from "@/components/layout/SideNav.vue";
@@ -104,33 +100,11 @@ import NotamInputConsole from "@/components/notam/NotamInputConsole.vue";
 import NotamStream from "@/components/notam/NotamStream.vue";
 
 const keyStore = useKeyStore();
-const notamRunStore = useNotamRunStore();
 const pref = usePreferenceStore();
-const rawInput = ref("");
 const selectedKeyId = ref("");
 
 if (keyStore.keys.length > 0) selectedKeyId.value = keyStore.keys[0].id;
 
-const handleExecute = () => {
-  if (!rawInput.value.trim()) return;
-  const runId = notamRunStore.startRun(rawInput.value, selectedKeyId.value);
-  notamRunStore.simulateRun(runId);
-  rawInput.value = "";
-  notamRunStore.updateGrounding("");
-};
-
-const loadExample = () => {
-  rawInput.value = `(A0123/24 NOTAMN
-Q) ZBPE/QRTCA/IV/BO/W/000/197/3956N11623E025
-A) ZBPE B) 2402010000 C) 2402152359
-D) DAILY 0000-0400 0800-1200
-E) TEMPORARY RESTRICTED AREA ESTABLISHED BOUNDED BY:
-395624N1162312E-395812N1162530E-400122N1162215E-
-395910N1161845E-395624N1162312E.
-VERTICAL LIMITS: GND UP TO FL197.
-TYPE OF RESTRICTION: MILITARY EXERCISE.
-F) GND G) FL197)`;
-};
 
 const notamMain = css({
   height: "100vh",

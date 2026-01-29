@@ -11,6 +11,7 @@
     "panda:ui": "panda codegen --watch"
   },
   "dependencies": {
+    "@vicons/fluent": "^0.13.0",
     "axios": "^1.7.7",
     "echarts": "^5.5.1",
     "naive-ui": "^2.40.3",

@@ -12,7 +12,10 @@ export default {
     loadExample: "加载示例",
     upload: "上传文件",
     monitor: "加入监控",
-    stopMonitor: "停止监控"
+    stopMonitor: "停止监控",
+
+    locate: "定位",
+    fix: "修正"
   },
   console: {
     title: "指令控制台",
@@ -48,20 +51,52 @@ export default {
     awaiting: "等待信号",
     standby: "系统就绪，等待 NOTAM 输入...",
     batchJob: "批量任务",
-    processing: "处理中",
-    renderCompleted: "渲染完成",
-    parsingFailed: "解析失败",
+    processing: "正在处理",
+    tasks: "个任务",
     inputPayload: "输入载荷",
     reasoningChain: "推理链",
-    processLog: "处理日志"
+    processLog: "处理日志",
+    
+    connecting: "建立连接中...",
+    discoveryAgent: "探索智能体 (Discovery)",
+    analystAgent: "分析智能体 (Analyst)",
+    validatorAgent: "校验智能体 (Validator)",
+    consensusAgent: "共识智能体 (Debate)",
+    rendering: "渲染视图...",
+    renderCompleted: "渲染完成",
+    parsingFailed: "解析失败",
   },
   reasoningDrawer: {
-    title: "Reasoning Chain",
-    ops: "OPS"
+    title: "推理链",
+    finished: "推理完成",
+    ops: "操作",
+    idle: "AI 推理引擎已就绪",
+    idleThinking: "AI 推理引擎思考中...",
+
+    showRawText: "显示原始消息"
   },
   status: {
     scanning: "扫描中",
     locked: "已锁定",
-    warning: "告警"
+    warning: "告警",
+
+    confidence: "置信度",
+
+    stage: {
+      idle: "闲置",
+      connecting: "连接中",
+      discovering: "扫描中",
+      analyzing: "分析中",
+      validating: "验证中",
+      finalized: "已完成",
+      failed: "失败"
+    },
+    time: {
+      active: "生效中",
+      pending: "即将生效",
+      expired: "已过期",
+      perm: "永久有效",
+      unknown: "未知"
+    }
   }
 };

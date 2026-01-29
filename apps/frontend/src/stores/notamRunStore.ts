@@ -1,67 +1,6 @@
+import { NotamCardModel } from "@/models/NotamCard";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-
-export type NotamStage =
-  | "idle"
-  | "connecting"
-  | "discovering"
-  | "analyzing"
-  | "validating"
-  | "debating"
-  | "rendering"
-  | "finalized"
-  | "failed";
-
-export type AlertSeverity = "info" | "warning" | "critical";
-
-export interface NotamThought {
-  id: string;
-  agent: "DISCOVERY" | "ANALYST" | "VALIDATOR" | "CONSENSUS";
-  text: string;
-  ts: number;
-  level?: "thinking" | "success" | "warning" | "error" | "info";
-  isStreaming?: boolean; // [新增] 修复类型报错
-}
-
-export interface NotamAlert {
-  id: string;
-  severity: AlertSeverity;
-  code?: string;
-  message: string;
-  ts: number;
-}
-
-export interface NotamEvidence {
-  id: string;
-  field: string;
-  snippet: string;
-  source?: string;
-  ts: number;
-}
-
-// [新增] 运行类型区分
-export type RunType = "single" | "batch";
-
-export interface NotamRun {
-  id: string;
-  type: RunType; // [新增]
-  createdAt: number;
-  rawText: string;
-  engineId?: string;
-  stage: NotamStage;
-  statusMessage?: string;
-  uiHeight?: number;
-  fields: Record<string, string | number | boolean | null>;
-  alerts: NotamAlert[];
-  thoughts: NotamThought[];
-  evidence: NotamEvidence[];
-  // [新增] 批量任务特有属性
-  batchProgress?: {
-    current: number;
-    total: number;
-    filename: string;
-  };
-}
 
 export interface GroundingContext {
   code: string;
@@ -94,11 +33,15 @@ const AIRPORT_DB: Record<string, GroundingContext> = {
 };
 
 export const useNotamRunStore = defineStore("notam-run", () => {
-  const runs = ref<NotamRun[]>([]);
-  const activeRunId = ref<string | null>(null);
+  // --- State ---
+  
+  // 1. 卡片流：直接持有 Class 实例的数组
+  const cards = ref<NotamCardModel[]>([]);
+
+  // 2. 全局交互状态
   const currentGrounding = ref<GroundingContext | null>(null);
 
-  // [新增] 订阅列表 (默认给几个假数据撑场面)
+  // 3. 雷达监控列表
   const targets = ref<RadarTarget[]>([
     { code: "ZSPD", name: "Shanghai Pudong", fir: "ZSHA", signalStrength: -42, status: 'scanning', lastPing: Date.now() },
     { code: "VHHH", name: "Hong Kong Intl", fir: "VHHK", signalStrength: -68, status: 'locked', lastPing: Date.now() - 50000 },
@@ -106,42 +49,73 @@ export const useNotamRunStore = defineStore("notam-run", () => {
     { code: "KJFK", name: "New York JFK", fir: "KZNY", signalStrength: -102, status: 'scanning', lastPing: Date.now() - 300000 },
   ]);
 
-  const startRun = (
-    rawText: string, 
-    engineId?: string, 
-    type: RunType = "single", 
-    batchMeta?: { filename: string; total: number }
-  ) => {
-    const id = crypto.randomUUID();
-    const run: NotamRun = {
-      id,
-      type,
-      createdAt: Date.now(),
-      rawText,
-      engineId,
-      stage: "connecting",
-      uiHeight: undefined, // 让 CSS 自动撑开
-      fields: {},
-      alerts: [],
-      thoughts: [],
-      evidence: [],
-      batchProgress: type === "batch" && batchMeta ? {
-        current: 0,
-        total: batchMeta.total,
-        filename: batchMeta.filename
-      } : undefined
-    };
-    runs.value.unshift(run);
-    activeRunId.value = id;
-    return id;
+  // --- Actions: Card Management ---
+
+  /**
+   * 创建一个新任务
+   */
+  const createRun = (rawText: string) => {
+    // 1. 实例化模型
+    const card = new NotamCardModel(rawText);
+    
+    // 2. 加入列表 (最新在最前)
+    cards.value.unshift(card);
+    
+    // 3. 让卡片自己开始干活
+    card.startAnalysis();
+    
+    return card.id;
   };
 
-  const setStage = (runId: string, stage: NotamStage, statusMessage?: string) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run) return;
-    run.stage = stage;
-    run.statusMessage = statusMessage;
-    run.uiHeight = calcRunHeight(run);
+  // [新增] 模拟批量运行
+  const simulateBatch = async () => {
+    const demos = [
+      "A0521/24 NOTAMN... ZBAA ... RWY 18L/36R CLSD DUE TO MAINT...",
+      "C1024/24 NOTAMN... ZSPD ... ILS RWY 17L GP U/S...",
+      "A0111/24 NOTAMN... VHHH ... TWY A CLSD PERM...",
+      "A0882/24 NOTAMN... ZGGG ... FIREWORKS DISPLAY..."
+    ];
+
+    for (const text of demos) {
+      createRun(text);
+      // 错峰触发，营造流式感
+      await new Promise(r => setTimeout(r, 600)); 
+    }
+  };
+
+  const clearAll = () => {
+    cards.value = [];
+    currentGrounding.value = null;
+  };
+
+  // [修改] 调试版 Grounding 更新逻辑
+  const updateGrounding = (text: string) => {
+    // console.log("[Store] Updating grounding with text:", text);
+    // 移除空白字符，防止 "Z B A A" 这种情况
+    const cleanText = text ? text.replace(/\s+/g, " ").trim().toUpperCase() : "";
+    if (!cleanText) {
+      currentGrounding.value = null;
+      return;
+    }
+    // 正则匹配所有可能的 4 位代码
+    const candidates = cleanText.match(/[A-Z]{4}/g);
+    if (candidates) {
+      // 查找数据库
+      const foundCode = candidates.find(code => Object.prototype.hasOwnProperty.call(AIRPORT_DB, code));
+      if (foundCode) {
+        // 只有当变了才更新，避免闪烁，但如果是从 null 变过来也要更新
+        if (currentGrounding.value?.code !== foundCode) {
+           currentGrounding.value = AIRPORT_DB[foundCode];
+        }
+        return;
+      }
+    }
+    // 如果当前有锁定，但新的输入里不再包含该代码，则清除锁定
+    // 例如：从 "ZBAA" 删改成 "ZBA"
+    if (currentGrounding.value && !cleanText.includes(currentGrounding.value.code)) {
+      console.log("[Store] Clearing grounding");
+      currentGrounding.value = null;
+    }
   };
 
   // [新增] 添加订阅
@@ -174,233 +148,21 @@ export const useNotamRunStore = defineStore("notam-run", () => {
     updateGrounding(code);
   };
 
-  const addThought = (runId: string, thought: Omit<NotamThought, "id" | "ts">) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run) return;
-    run.thoughts.push({
-      id: crypto.randomUUID(),
-      ts: Date.now(),
-      ...thought,
-    });
-    run.uiHeight = calcRunHeight(run);
-  };
-
-  // [新增] 逐字追加 Token (打字机核心)
-  const appendThoughtToken = (runId: string, token: string) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run || run.thoughts.length === 0) return;
-    
-    const lastThought = run.thoughts[run.thoughts.length - 1];
-    lastThought.text += token;
-    lastThought.isStreaming = true;
-  };
-
-  // [新增] 结束当前思考流
-  const finishThought = (runId: string) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run || run.thoughts.length === 0) return;
-    run.thoughts[run.thoughts.length - 1].isStreaming = false;
-  };
-
-  const addAlert = (runId: string, alert: Omit<NotamAlert, "id" | "ts">) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run) return;
-    run.alerts.push({
-      id: crypto.randomUUID(),
-      ts: Date.now(),
-      ...alert,
-    });
-    run.uiHeight = calcRunHeight(run);
-  };
-
-  const mergeFields = (runId: string, patch: Record<string, string | number | boolean | null>) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run) return;
-    run.fields = { ...run.fields, ...patch };
-    run.uiHeight = calcRunHeight(run);
-  };
-
-  const addEvidence = (runId: string, evidence: Omit<NotamEvidence, "id" | "ts">) => {
-    const run = runs.value.find((item) => item.id === runId);
-    if (!run) return;
-    run.evidence.push({
-      id: crypto.randomUUID(),
-      ts: Date.now(),
-      ...evidence,
-    });
-    run.uiHeight = calcRunHeight(run);
-  };
-
-  const calcRunHeight = (run: NotamRun) => {
-    // 基础高度
-    let h = 200;
-    
-    if (run.type === "batch") {
-      h = 180; // Batch 卡片稍微紧凑点
-      if (run.thoughts.length > 0) h += 100; // 如果有日志展开
-      if (run.alerts.length > 0) h += run.alerts.length * 40;
-      if (Object.keys(run.fields).length > 0) h += 60;
-      return h;
-    }
-
-    const base =
-      run.stage === "connecting"
-        ? 240
-        : run.stage === "discovering" || run.stage === "analyzing" || run.stage === "validating"
-        ? 280
-        : run.stage === "debating" || run.stage === "rendering"
-        ? 320
-        : run.stage === "failed"
-        ? 300
-        : 360;
-
-    const fieldCount = Object.keys(run.fields).length;
-    const alertBonus = run.alerts.length > 0 ? 30 : 0;
-    const thoughtBonus = run.thoughts.length > 0 ? 40 : 0;
-    const fieldBonus = Math.min(fieldCount * 8, 80);
-
-    return base + alertBonus + thoughtBonus + fieldBonus;
-  };
-
-  // [修改] 调试版 Grounding 更新逻辑
-  const updateGrounding = (text: string) => {
-    // 移除空白字符，防止 "Z B A A" 这种情况
-    const cleanText = text ? text.replace(/\s+/g, " ").trim().toUpperCase() : "";
-    
-    // console.log("[Store] updateGrounding input:", cleanText);
-
-    if (!cleanText) {
-      currentGrounding.value = null;
-      return;
-    }
-
-    // 正则匹配所有可能的 4 位代码
-    const candidates = cleanText.match(/[A-Z]{4}/g);
-    
-    if (candidates) {
-      // 查找数据库
-      const foundCode = candidates.find(code => Object.prototype.hasOwnProperty.call(AIRPORT_DB, code));
-      
-      if (foundCode) {
-        console.log("[Store] Found airport:", foundCode);
-        // 只有当变了才更新，避免闪烁，但如果是从 null 变过来也要更新
-        if (currentGrounding.value?.code !== foundCode) {
-           currentGrounding.value = AIRPORT_DB[foundCode];
-        }
-        return;
-      }
-    }
-    
-    // 如果当前有锁定，但新的输入里不再包含该代码，则清除锁定
-    // 例如：从 "ZBAA" 删改成 "ZBA"
-    if (currentGrounding.value && !cleanText.includes(currentGrounding.value.code)) {
-      console.log("[Store] Clearing grounding");
-      currentGrounding.value = null;
-    }
-  };
-
-  // [新增] 模拟批量运行
-  const simulateBatchRun = async (runId: string) => {
-    const run = runs.value.find((r) => r.id === runId);
-    if (!run || !run.batchProgress) return;
-
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-    setStage(runId, "analyzing", `Batch processing ${run.batchProgress.filename}...`);
-    
-    // 模拟逐个处理
-    const total = run.batchProgress.total;
-    for (let i = 1; i <= total; i++) {
-      run.batchProgress.current = i;
-      
-      // 每处理 5 个产生一条日志
-      if (i % 5 === 0 || i === 1 || i === total) {
-        addThought(runId, { 
-          agent: "ANALYST", 
-          text: `Processing item #${i}: Extracting spatial data... OK`, 
-          level: "info" 
-        });
-        run.uiHeight = calcRunHeight(run); // 强制重算高度
-      }
-
-      // 模拟偶尔发现 Critical Issue
-      if (i === 12) {
-        addAlert(runId, { severity: "critical", message: `Item #12: ZBAA Runway Closure Detected` });
-      }
-
-      await sleep(Math.random() * 50 + 20); // 快速处理
-    }
-
-    setStage(runId, "finalized", "Batch import completed");
-    
-    // 汇总结果
-    mergeFields(runId, {
-      "Total Parsed": total,
-      "Critical Alerts": 1,
-      "Success Rate": "100%"
-    });
-  };
-
-  // [修改] 模拟流式生成
-  const simulateRun = async (runId: string) => {
-    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    
-    // 辅助：流式文本生成
-    const streamText = async (text: string) => {
-      const chars = text.split("");
-      for (const char of chars) {
-        appendThoughtToken(runId, char);
-        await sleep(Math.random() * 20 + 5); // 5-25ms 随机延迟
-      }
-      finishThought(runId);
-    };
-
-    // Stage 1: Discovery
-    setStage(runId, "discovering", "Agent DISCOVERY active...");
-    addThought(runId, { agent: "DISCOVERY", text: "", level: "thinking", isStreaming: true });
-    
-    await streamText("Scanning input text for aeronautical entities...\nIdentified Aerodrome: ZBAA (Beijing Capital)\nIdentified Runway: 18L/36R\nChecking against AIP database...");
-    
-    mergeFields(runId, { runway: "18L/36R", status: "CLOSED" });
-
-    // Stage 2: Analyst
-    await sleep(300);
-    setStage(runId, "analyzing", "Agent ANALYST reasoning...");
-    addThought(runId, { agent: "ANALYST", text: "", level: "thinking", isStreaming: true });
-    
-    await streamText("Analyzing closure impact...\nTimeframe: 0000-0800Z (Peak hours)\nTraffic Impact: High capacity reduction expected.\nCross-referencing historical delay data for ZBAA...");
-    
-    addAlert(runId, { severity: "critical", message: "Significant capacity reduction detected" });
-
-    // Stage 3: Validator
-    await sleep(300);
-    setStage(runId, "validating", "Validating output...");
-    addThought(runId, { agent: "VALIDATOR", text: "", level: "thinking", isStreaming: true });
-    await streamText("Verifying logic consistencies... OK.");
-
-    setStage(runId, "finalized", "Render completed");
-  };
-
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
   return {
-    runs,
-    activeRunId,
+    // State
+    cards,
     currentGrounding,
-    targets, // [导出]
-    startRun,
-    setStage,
-    addThought,
-    appendThoughtToken, // 确保导出这个
-    finishThought,      // 确保导出这个
-    addAlert,
-    mergeFields,
-    addEvidence,
+    targets,
+    
+    // Card Actions
+    createRun,
+    simulateBatch,
+    clearAll,
+    
+    // Global Actions
     updateGrounding,
-    simulateRun,
-    simulateBatchRun, // [新增]
-    addTarget,     // [导出]
-    removeTarget,  // [导出]
-    activateTarget, // [导出]
+    addTarget,
+    removeTarget,
+    activateTarget
   };
 });

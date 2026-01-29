@@ -1,20 +1,27 @@
 <template>
-  <div :class="drawerWrap">
-    <div :class="drawerHeader" @click="toggle">
-      <div :class="drawerTitle">
-        <span :class="iconStyle">{{ expanded ? "▼" : "▶" }}</span>
-        <span>{{ title }}</span>
-      </div>
-      <span :class="countBadge">{{ items.length }} OPS</span>
-    </div>
-    <n-collapse-transition :show="expanded">
-      <div :class="drawerBody">
-        <div v-for="item in items" :key="item.id" :class="line">
-          <span :class="agentTag(item.agent)">{{ item.agent }}</span>
-          <span :class="text">
-            {{ item.text }}
-            <span v-if="item.isStreaming" :class="cursor">_</span>
-          </span>
+  <div :class="drawerSection">
+    <button @click="toggle" :class="expandControl">
+      <span :class="labelStyle">AI REASONING & RAW DATA</span>
+      <n-icon :size="14" :class="arrowIconStyle(model.isExpanded)">
+        <ChevronDown16Regular />
+      </n-icon>
+    </button>
+
+    <n-collapse-transition :show="model.isExpanded">
+      <div :class="expandedContent">
+        <div v-if="model.thoughts.length > 0" :class="logContainer">
+          <div v-for="log in model.thoughts" :key="log.id" :class="logItem">
+            <span :class="agentTag(log.agent)">{{ log.agent }}</span>
+            <span :class="logText">
+              {{ log.content }}
+              <span v-if="log.isStreaming" :class="cursor">_</span>
+            </span>
+          </div>
+        </div>
+
+        <div :class="rawBox">
+          <div :class="rawTitle">ORIGINAL MESSAGE</div>
+          <pre :class="rawPre">{{ model.rawText }}</pre>
         </div>
       </div>
     </n-collapse-transition>
@@ -22,141 +29,65 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { css } from "@/styled-system/css";
-// [新增] 引入 Naive UI 的折叠过渡组件
-import { NCollapseTransition } from "naive-ui";
-import { usePreferenceStore } from "@/stores/preferenceStore";
-const pref = usePreferenceStore();
+import { NIcon, NCollapseTransition } from 'naive-ui';
+import { ChevronDown16Regular } from '@vicons/fluent';
+import { css } from '@/styled-system/css';
+import type { NotamCardModel, AgentType } from '@/models/NotamCard';
 
-interface ReasoningItem {
-  id: string;
-  agent: string;
-  text: string;
-  isStreaming?: boolean;
-}
+const props = defineProps<{
+  model: NotamCardModel
+}>();
 
-const props = withDefaults(
-  defineProps<{
-    items: ReasoningItem[];
-    defaultOpen?: boolean;
-    isStreaming?: boolean;
-    title?: string;
-  }>(),
-  {
-    items: () => [],
-    defaultOpen: false,
-    isStreaming: false,
-    title: "Reasoning Chain",
-  }
-);
-
-const expanded = ref(props.defaultOpen);
 const toggle = () => {
-  expanded.value = !expanded.value;
+  props.model.isExpanded = !props.model.isExpanded;
 };
 
-// 如果有新的流进来，自动展开
-watch(() => props.isStreaming, (newVal) => {
-  if (newVal) expanded.value = true;
+// --- Styles ---
+
+const drawerSection = css({ mt: '1' });
+
+const expandControl = css({
+  display: 'flex', alignItems: 'center', gap: '2',
+  bg: 'transparent', border: 'none', cursor: 'pointer',
+  color: 'surface.textDim', fontSize: '10px', fontWeight: 'bold',
+  p: '0', mb: '1',
+  _hover: { color: 'brand.primary' }
 });
 
-const drawerWrap = css({ borderTop: "1px solid token(colors.surface.outline)" });
-// [修改] 头部样式：增加高度、内边距、字号，增加点击手感
-const drawerHeader = css({
-  p: "3 4", // 原为 "2 3"，增加内边距
-  fontSize: "xs", // 原为 "10px"，调大字号
-  height: "32px", // 固定高度，增加点击区域
-  fontWeight: "600", // 加粗
-  color: "surface.textDim",
-  cursor: "pointer",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  bg: "surface.sunken",
-  // borderTop: "1px solid token(colors.surface.outline)",
-  userSelect: "none", // 防止快速点击时选中文本
-  transition: "background 0.2s",
-  _hover: { bg: "rgba(0, 0, 0, 0.04)" } // 增加悬停反馈
-});
-// [新增] 箭头的样式，防止它忽大忽小
-const iconStyle = css({
-  display: "inline-block",
-  width: "16px",
-  textAlign: "center",
-  mr: "1",
-  fontSize: "10px"
-});
-const drawerTitle = css({ display: "flex", alignItems: "center", gap: "2" });
-const countBadge = css({
-  bg: "rgba(0,0,0,0.12)",
-  px: "1.5",
-  borderRadius: "sm",
-  fontSize: "9px",
-  mr: "2" // <--- [新增] 增加右侧间距
-});// [修改] 内容体：增加内边距，解决文字贴边问题
-const drawerBody = css({
-  p: "4", // 原为 "3"，让内容呼吸感更强
-  bg: "surface.sunken", // 保持深色背景
-  borderTop: "1px solid rgba(0,0,0,0.06)", // 增加一条分割线
-  display: "grid",
-  gap: "3", // 原为 "2"，增加行间距
-  maxHeight: "300px",
-  overflowY: "auto",
-  fontFamily: "mono" // 强制等宽
-});
-const line = css({ display: "flex", gap: "3", fontSize: "11px", fontFamily: "mono" });
-const agentTag = (agent: string) =>
-  css({
-    color:
-      agent === "DISCOVERY"
-        ? "#1a74ff"
-        : agent === "ANALYST"
-        ? "#a855f7"
-        : agent === "INPUT"
-        ? "#64748b"
-        : "#10b981",
-    fontWeight: "bold",
-    minWidth: "72px", // 稍微加宽
-    textAlign: "right",
-    fontSize: "10px", // 原为 9px
-    lineHeight: "1.6",
-    opacity: 0.9
-  });
-// [修改] 日志文本：增加行高，优化阅读体验
-const text = css({
-  color: "surface.textDim",
-  // lineHeight: "1.6",
-  wordBreak: "break-word"
-});
-const typingIndicator = css({ color: "surface.textDim", fontSize: "lg", lineHeight: "0.5", pl: "84px" });
+const labelStyle = css({ textTransform: 'uppercase', letterSpacing: '0.05em' });
 
-// [新增] 光标样式
-const cursor = css({
-  display: "inline-block",
-  color: "#22c55e",
-  fontWeight: "bold",
-  animation: "blink 1s step-end infinite"
+const arrowIconStyle = (expanded: boolean) => css({
+  transition: 'transform 0.2s',
+  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)'
 });
+
+const expandedContent = css({
+  borderTop: '1px dashed token(colors.surface.outline)',
+  pt: '2', mt: '1'
+});
+
+const logContainer = css({ display: 'flex', flexDirection: 'column', gap: '1', mb: '3' });
+const logItem = css({ display: 'flex', gap: '2', fontSize: '10px', fontFamily: 'mono' });
+
+const agentTag = (agent: AgentType) => css({
+  minWidth: '60px', textAlign: 'right', fontWeight: 'bold',
+  color: agent === 'DISCOVERY' ? 'blue.500' : (agent === 'ANALYST' ? 'purple.500' : 'green.500')
+});
+
+const logText = css({ color: 'surface.text', flex: 1, lineHeight: '1.4' });
+
+const rawBox = css({ 
+  bg: 'surface.canvas', p: '2', borderRadius: 'md', 
+  border: '1px solid token(colors.surface.outline)' 
+});
+const rawTitle = css({ fontSize: '9px', color: 'surface.textDim', mb: '1', fontWeight: 'bold' });
+const rawPre = css({ 
+  fontFamily: 'mono', fontSize: '10px', color: 'surface.textDim', 
+  whiteSpace: 'pre-wrap', wordBreak: 'break-all', margin: 0 
+});
+const cursor = css({ animation: 'blink 1s infinite' });
 </script>
 
 <style scoped>
-/* 强制加速折叠动画 (原默认约 0.3s) */
-.n-collapse-transition {
-  transition-duration: 0.15s !important;
-}
-.dot {
-  display: inline-block;
-  animation: blink 1.2s infinite;
-}
-.dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0.3; }
-  40% { opacity: 1; }
-}
+@keyframes blink { 50% { opacity: 0; } }
 </style>

@@ -36,6 +36,15 @@ export default defineConfig({
               dim: { value: "#5d6a85" }
             }
           },
+          // [新增] 状态语义色，用于卡片状态条、标签等
+          status: {
+            critical: { value: "#ef4444" }, // Red-500
+            warning:  { value: "#f59e0b" }, // Amber-500
+            info:     { value: "#3b82f6" }, // Blue-500
+            active:   { value: "#22c55e" }, // Green-500
+            pending:  { value: "#f97316" }, // Orange-500
+            expired:  { value: "#64748b" }  // Slate-500
+          },
           surface: {
             canvas: { value: "#f3f5fb" },
             base: { value: "#ffffff" },
@@ -72,6 +81,15 @@ export default defineConfig({
               main: { value: "#e7edff" },
               dim: { value: "#9aa9c4" },
             }
+          },
+          // [新增] 深色模式下的状态色调整（稍微调亮一点以适应黑底）
+          status: {
+            critical: { value: "#f87171" }, // Red-400
+            warning:  { value: "#fbbf24" }, // Amber-400
+            info:     { value: "#60a5fa" }, // Blue-400
+            active:   { value: "#4ade80" }, // Green-400
+            pending:  { value: "#fb923c" }, // Orange-400
+            expired:  { value: "#94a3b8" }  // Slate-400
           },
           surface: {
             canvas: { value: "#0b1020" },

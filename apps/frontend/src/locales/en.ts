@@ -12,7 +12,10 @@ export default {
     loadExample: "LOAD EXAMPLE",
     upload: "Upload File",
     monitor: "MONITOR",
-    stopMonitor: "Stop Monitoring"
+    stopMonitor: "Stop Monitoring",
+
+    locate: "Locate",
+    fix: "Fix"
   },
   console: {
     title: "COMMAND CONSOLE",
@@ -49,19 +52,51 @@ export default {
     standby: "System standing by for NOTAM input...",
     batchJob: "BATCH JOB",
     processing: "PROCESSING",
-    renderCompleted: "RENDER COMPLETED",
-    parsingFailed: "PARSING FAILED",
+    tasks: "TASKS",
     inputPayload: "Input Payload",
     reasoningChain: "Reasoning Chain",
-    processLog: "Process Log"
+    processLog: "Process Log",
+    
+    connecting: "Connecting...",
+    discoveryAgent: "Agent DISCOVERY",
+    analystAgent: "Agent ANALYST",
+    validatorAgent: "Agent VALIDATOR",
+    consensusAgent: "Agent CONSENSUS",
+    rendering: "Rendering View...",
+    renderCompleted: "RENDER COMPLETED",
+    parsingFailed: "PARSING FAILED",
   },
   reasoningDrawer: {
     title: "Reasoning Chain",
-    ops: "OPS"
+    finished: "Analysis process completed",
+    ops: "OPS",
+    idle: "AI Reasoning Engine Ready",
+    idleThinking: "AI Reasoning Engine Thinking...",
+
+    showRawText: "SHOW ORIGINAL MESSAGE"
   },
   status: {
     scanning: "SCANNING",
     locked: "LOCKED",
-    warning: "WARNING"
+    warning: "WARNING",
+
+    confidence: "CONFIDENCE",
+
+    stage: {
+      idle: "IDLE",
+      connecting: "CONNECTING",
+      discovering: "SCANNING",
+      analyzing: "ANALYZING",
+      validating: "VALIDATING",
+      finalized: "DONE",
+      failed: "FAILED"
+    },
+    time: {
+      active: "ACTIVE",
+      pending: "PENDING",
+      expired: "EXPIRED",
+      perm: "PERM",
+      unknown: "UNKNOWN"
+    }
   }
 };
