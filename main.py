@@ -16,7 +16,7 @@ try:
     POML_AVAILABLE = True
 except ImportError:
     POML_AVAILABLE = False
-    print("⚠️  Warning: 'poml' module not found. POML mode will be disabled.")
+    print("Warning: 'poml' module not found. POML mode will be disabled.")
 
 # Import project modules
 from src.api_manager import create_api_manager
@@ -150,13 +150,14 @@ class DataProcessor:
         batch_indices = []
         
         for i, item in enumerate(batch_records):
-            if 'raw_text' in item:
+            input_text = item.get('raw_text') or item.get('input') or item.get('telex') or item.get('text')
+            if input_text:
                 if self.self_consistency_enabled:
                     for round_idx in range(self.consistency_rounds):
                         batch_requests.append({
                         'mode': 'poml',
                             'poml_file': self.poml_file,
-                            'input_text': item['raw_text'],
+                            'input_text': input_text,
                             'max_retries': 3,
                             'original_index': i,
                             'round': round_idx
@@ -165,7 +166,7 @@ class DataProcessor:
                     batch_requests.append({
                         'mode': 'poml',
                         'poml_file': self.poml_file,
-                        'input_text': item['raw_text'],
+                        'input_text': input_text,
                         'max_retries': 3,
                         'original_index': i,
                         'round': 0
@@ -233,7 +234,7 @@ class DataProcessor:
                         else:
                             result_record['parse_fields'] = {'error': api_result['result'].get('error')}
             else:
-                result_record['parse_fields'] = {'error': 'Missing raw_text field'}
+                result_record['parse_fields'] = {'error': 'Missing input text field (raw_text/input/telex/text)'}
             
             processed_records.append(result_record)
         
@@ -248,12 +249,13 @@ class DataProcessor:
         batch_indices = []
         
         for i, item in enumerate(batch_records):
-            if 'raw_text' in item:
+            input_text = item.get('raw_text') or item.get('input') or item.get('telex') or item.get('text')
+            if input_text:
                 if self.self_consistency_enabled:
                     for round_idx in range(self.consistency_rounds):
                         batch_requests.append({
                             'prompt': prompt,
-                            'input_text': item['raw_text'],
+                            'input_text': input_text,
                             'max_retries': 3,
                             'original_index': i,
                             'round': round_idx
@@ -261,7 +263,7 @@ class DataProcessor:
                 else:
                     batch_requests.append({
                         'prompt': prompt,
-                        'input_text': item['raw_text'],
+                        'input_text': input_text,
                         'max_retries': 3,
                         'original_index': i,
                         'round': 0
@@ -331,7 +333,7 @@ class DataProcessor:
                         else:
                             result_record['parse_fields'] = {'error': api_result['result'].get('error')}
             else:
-                result_record['parse_fields'] = {'error': 'Missing raw_text field'}
+                result_record['parse_fields'] = {'error': 'Missing input text field (raw_text/input/telex/text)'}
             
             processed_records.append(result_record)
         
@@ -516,6 +518,7 @@ def main():
         # Process prompt: if it's a predefined prompt name, get the actual content
         prompt_map = {
             'LIGHT_PROMPT': LIGHT_PROMPT_ICL,
+            'LIGHT_PROMPT_ICL': LIGHT_PROMPT_ICL,
             'LIGHT_PROMPT_A': LIGHT_PROMPT_ICL_A,
             'LIGHT_PROMPT_Vanilla': LIGHT_PROMPT_Vanilla,
             'LIGHT_PROMPT_A_Vanilla': LIGHT_PROMPT_A_Vanilla,

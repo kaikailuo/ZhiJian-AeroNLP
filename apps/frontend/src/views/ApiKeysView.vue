@@ -20,7 +20,7 @@
         />
 
         <div v-if="keyStore.keys.length === 0" :class="emptyCard">
-          暂无密钥，请点击右上角录入 DeepSeek 或 OpenAI Key 以开启解析功能。
+          暂无密钥，请点击右上角录入 Qwen、DeepSeek、OpenAI 或 DMX Key 以开启解析功能。
         </div>
       </section>
 

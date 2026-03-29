@@ -9,9 +9,9 @@
     "build": "vite build",
     "prebuild": "npm run panda:gen",
     "preview": "vite preview",
-    "panda:css": "panda cssgen -o src/styled-system/styles.css --watch",
-    "panda:ui": "panda codegen --watch",
-    "panda:gen": "panda codegen && panda cssgen -o src/styled-system/styles.css"
+    "panda:css": "npx --yes @pandacss/dev cssgen -o src/styled-system/styles.css --watch",
+    "panda:ui": "npx --yes @pandacss/dev codegen --watch",
+    "panda:gen": "npx --yes @pandacss/dev codegen && npx --yes @pandacss/dev cssgen -o src/styled-system/styles.css"
   },
   "dependencies": {
     "@vicons/fluent": "^0.13.0",

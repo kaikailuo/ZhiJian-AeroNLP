@@ -59,13 +59,23 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h3>地理地图占位</h3>
-              <p class="card-sub">实时空域可视化（MVP）</p>
+              <h3>系统状态</h3>
+              <p class="card-sub">后端实时组件健康信息</p>
             </div>
           </div>
-          <div class="map-placeholder">
-            <div class="map-grid"></div>
-            <span>全球地图图层即将接入</span>
+          <div class="status-board">
+            <div class="status-row">
+              <span>数据库</span>
+              <b>{{ summary.system_status.db || "--" }}</b>
+            </div>
+            <div class="status-row">
+              <span>解析器</span>
+              <b>{{ summary.system_status.parser || "--" }}</b>
+            </div>
+            <div class="status-row">
+              <span>任务队列</span>
+              <b>{{ summary.system_status.queue || "--" }}</b>
+            </div>
           </div>
         </div>
       </section>
@@ -234,25 +244,22 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
-.map-placeholder {
+.status-board {
   height: 220px;
   border-radius: 12px;
-  border: 1px dashed rgba(11, 16, 32, 0.2);
+  border: 1px solid rgba(11, 16, 32, 0.12);
   display: grid;
-  place-items: center;
-  color: #66748c;
+  align-content: center;
+  gap: 14px;
+  padding: 20px;
   background: linear-gradient(135deg, rgba(26, 116, 255, 0.05), rgba(31, 225, 255, 0.08));
-  position: relative;
-  overflow: hidden;
 }
 
-.map-grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-  background-size: 24px 24px;
-  opacity: 0.3;
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #344563;
 }
 
 .alert-list {

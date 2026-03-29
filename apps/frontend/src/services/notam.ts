@@ -13,7 +13,7 @@ export const notamAPI = {
   // parse(payload: NotamParseRequest) {
   //   return api.post<NotamParseResponse>("/notam/parse", payload);
   // },
-  parse(payload: NotamParseRequest, config?: { key: string; provider: string }) {
+  parse(payload: NotamParseRequest, config?: { key: string; provider: 'qwen' | 'deepseek' | 'openai' | 'dmx' }) {
     // 将 Key 放入 Header 传给后端
     // 后端 api_manager 需要对应修改逻辑读取 X-Override-Key
     const headers = config ? {

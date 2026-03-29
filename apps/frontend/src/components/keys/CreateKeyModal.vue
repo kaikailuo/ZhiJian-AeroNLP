@@ -8,6 +8,7 @@
         <select v-model="form.provider" :class="inputStyle">
           <option value="deepseek">DeepSeek (深度求索)</option>
           <option value="openai">OpenAI (GPT-4)</option>
+          <option value="qwen">Qwen (阿里云百炼)</option>
           <option value="dmx">DMX (聚合API)</option>
         </select>
       </div>
@@ -38,7 +39,7 @@ const props = defineProps<{ isOpen: boolean }>();
 const emit = defineEmits(['close', 'save']);
 
 const form = ref({
-  provider: 'deepseek' as 'deepseek' | 'openai' | 'dmx',
+  provider: 'deepseek' as 'deepseek' | 'openai' | 'dmx' | 'qwen',
   name: '',
   sk: ''
 });

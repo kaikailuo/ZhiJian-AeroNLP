@@ -352,10 +352,10 @@ class APIManager:
                     client = APIClient(**provider_config)
                 
                 self.register_client(provider, client, is_default=(provider == 'deepseek'))
-                self.logger.info(f"✅ Successfully set up {provider} client")
+                self.logger.info(f"Successfully set up {provider} client")
                 
             except Exception as e:
-                self.logger.error(f"❌ Failed to set up {provider} client: {e}")
+                self.logger.error(f"Failed to set up {provider} client: {e}")
     
     def single_call(self, 
                     prompt: str, 

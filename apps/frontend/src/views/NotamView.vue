@@ -228,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import { useKeyStore } from "@/stores/keyStore";
 import { usePreferenceStore } from "@/stores/preferenceStore";
 import { css } from "@/styled-system/css";
@@ -239,7 +239,10 @@ import NotamStream from "@/components/notam/NotamStream.vue";
 
 const keyStore = useKeyStore();
 const pref = usePreferenceStore();
-const selectedKeyId = ref("");
+const selectedKeyId = computed({
+  get: () => keyStore.selectedKeyId,
+  set: (value: string) => keyStore.selectKey(value),
+});
 
-if (keyStore.keys.length > 0) selectedKeyId.value = keyStore.keys[0].id;
+if (!keyStore.selectedKeyId && keyStore.keys.length > 0) keyStore.selectKey(keyStore.keys[0].id);
 </script>

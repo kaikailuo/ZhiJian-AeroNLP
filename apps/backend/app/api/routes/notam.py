@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from sqlmodel import Session, select
 
 from app.api.deps import require_permission
@@ -17,10 +17,12 @@ router = APIRouter(prefix="/notam", tags=["notam"], dependencies=[Depends(rate_l
 @router.post("/parse", response_model=NotamParseResponse)
 def parse_notam(
     payload: NotamParseRequest,
+    x_ai_proxy_key: str | None = Header(default=None, alias="X-AI-Proxy-Key"),
+    x_ai_proxy_provider: str | None = Header(default=None, alias="X-AI-Proxy-Provider"),
     session: Session = Depends(get_session),
     current_user: User = Depends(require_permission("notam")),
 ) -> NotamParseResponse:
-    parsed = parse_notam_text(payload.raw_text)
+    parsed = parse_notam_text(payload.raw_text, provider=x_ai_proxy_provider, api_key=x_ai_proxy_key)
     record = NotamRecord(
         raw_text=payload.raw_text,
         parsed_json=json.dumps(parsed),
